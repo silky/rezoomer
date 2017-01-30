@@ -1,0 +1,7 @@
+resolver: nightly-2017-01-28
+packages:
+    - '.'
+
+flags: {}
+extra-package-dbs: []
+system-ghc: false
