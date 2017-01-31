@@ -1,7 +1,8 @@
-resolver: nightly-2017-01-28
+resolver: nightly-2017-01-30
 packages:
-    - '.'
-
+  - '.'
 flags: {}
 extra-package-dbs: []
 system-ghc: false
+ghc-options:
+  "*": -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
