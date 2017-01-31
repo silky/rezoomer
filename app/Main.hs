@@ -10,18 +10,20 @@ import           Graphics.Image  ( scale
                                  , Array
                                  , writeImage
                                  , dims
-                                 , superimpose
+                                 , leftToRight
+                                 , topToBottom
                                  , RPU (..)
                                  , Border (..)
                                  , Bilinear (..)
                                  )
+
 import           System.Random   (randomRIO)
-import           Control.Monad   (replicateM)
+
 import           Options.Generic ( getRecord
                                  , ParseRecord
                                  , Generic
                                  )
-import           Data.Foldable   (foldl')
+
 
 
 
@@ -50,43 +52,44 @@ data Action = Zoom !Double
 
 
 applyActionsOnRegions :: Array arr cs e 
-                      => [(Action, Region)] 
+                      => [[(Action, Region)]]
                       -> Image arr cs e
                       -> Image arr cs e
-applyActionsOnRegions actionsAndRegions src = foldl' f src actionsAndRegions
+applyActionsOnRegions actionsAndRegions src = combine $ map (map (f src)) actionsAndRegions
     where
-        f img (Zoom z, Region (x, y) (w, h)) = let  cropIt      = crop (x, y) (w, h)
+        combine = foldr1 topToBottom . map (foldr1 leftToRight)
+        f img (Zoom z, Region (x, y) (w, h)) = let  cropIt      = crop (y, x) (h, w)
                                                     zoomIt      = scale Bilinear Edge (z, z)
-                                                    cropZoomed  = centerCrop (w, h)
-                                                    patchIt     = flip (superimpose (x, y)) img
-                                                in (patchIt . cropZoomed . zoomIt . cropIt) img
+                                                    cropZoomed  = centerCrop (h, w)
+                                                in (cropZoomed . zoomIt . cropIt) img
 
 
 centerCrop :: Array arr cs e
            => (Int, Int)
            -> Image arr cs e
            -> Image arr cs e
-centerCrop (w, h) src = crop (i, j) (w, h) src
+centerCrop (h, w) src = crop (i, j) (h, w) src
     where
-        (x, y) = dims src
-        i = (x - w) `div` 2
-        j = (y - h) `div` 2
+        (m, n) = dims src
+        i = (m - h) `div` 2
+        j = (n - w) `div` 2
 
 
 go :: Options -> IO ()
 go opts = do
     image <- readImageRGB RPU (inImage opts)
     
-    let (x, y) = dims image
+    let (y, x) = dims image
         s      = size opts
         segs a = a `div` s
-        regions = [ Region (a * s, b * s) (s, s) 
-                        | a <- [0..segs x - 1], b <- [0..segs y - 1] ]
- 
-    zooms <- replicateM (length regions) (randomRIO (1.0, 2.0))
+        regions = [[ Region (a * s, b * s) (s, s) 
+                        | a <- [0..segs x - 1]] | b <- [0..segs y - 1] ]
+        addZoom = mapM (\ r -> do
+                           z <- randomRIO (1.0, 2.0)
+                           return (Zoom z, r))
+    actionsRegions <- mapM addZoom regions
      
-    let actions = map Zoom zooms
-    let final   = applyActionsOnRegions (zip actions regions) image
+    let final   = applyActionsOnRegions actionsRegions image
 
     writeImage (outImage opts) final
 
