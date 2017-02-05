@@ -24,7 +24,7 @@ import           Graphics.Image  ( scale
                                  -- , SaveOption (..)
                                  , GifDelay
                                  )
-import Graphics.Image.IO.Formats
+import Graphics.Image.IO.Formats 
 import           System.Random   (randomRIO)
 import           Control.Monad   (replicateM)
 import           Options.Generic ( getRecord
@@ -111,7 +111,7 @@ writeGif opts image = do
     writeImageExact GIFA
                     [GIFALooping LoopingForever]
                     (outImage opts)
-                    (zip delays (map (exchange VS) imgs))
+                    (zip delays images)
 
 
 writeNormal :: Array arr RGB Double
