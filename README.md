@@ -22,7 +22,7 @@ This will install the `rezoomer` binary:
 > rezoomer --help
 rezoom - fun image transformation!
 
-Usage: rezoomer --size INT --inImage STRING --outImage STRING
+Usage: rezoomer --size INT --inImage STRING --outImage STRING [--gif]
 
 Available options:
   -h,--help                Show this help text
@@ -55,7 +55,7 @@ perform this filter on, and where it should write it's ouput to.
 | Command | `./makegif images/lake.jpg`
 
 
-## Making a GIF
+## Making a GIF (crazy way)
 
 The GIF conversion is done by a series of hacky imagemagick commands. So
 first, install [imagemagick](https://www.imagemagick.org/), and then look at
@@ -67,3 +67,13 @@ Basically it:
 2. Downsamples them to make the GIF smaller
 3. Combines them into a GIF.
 
+
+## Making a GIF via the executable
+
+Run
+
+```
+rezoomer --size 50 --inImage images/greeze.jpg --outImage images/greece.gif --gif
+```
+
+And it'll generate a GIF, but the sizes aren't randomised.

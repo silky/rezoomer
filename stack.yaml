@@ -1,6 +1,8 @@
 resolver: nightly-2017-01-30
 packages:
   - '.'
+extra-deps:
+  - hip-1.5.2.0
 flags: {}
 extra-package-dbs: []
 system-ghc: false

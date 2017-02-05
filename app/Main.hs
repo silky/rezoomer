@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE FlexibleContexts  #-}
 
 module Main where
 
@@ -7,30 +8,39 @@ import           Graphics.Image  ( scale
                                  , crop
                                  , readImageRGB
                                  , Image
+                                 , exchange
                                  , Array
                                  , writeImage
+                                 , writeImageExact
                                  , dims
                                  , leftToRight
                                  , topToBottom
                                  , RPU (..)
+                                 , RGB (..)
+                                 , Word8 (..)
+                                 , VS (..)
                                  , Border (..)
                                  , Bilinear (..)
+                                 , ImageFormat(..)
                                  )
-
+import Graphics.Image.IO.Formats ( GifLooping (..)
+                                 , GIF (..) 
+                                 , GifDelay
+                                 , SaveOption(..)
+                                 )
 import           System.Random   (randomRIO)
-
+import           Control.Monad   (replicateM)
 import           Options.Generic ( getRecord
                                  , ParseRecord
                                  , Generic
                                  )
 
 
-
-
 data Options = Options
              { size     :: Int
              , inImage  :: FilePath
              , outImage :: FilePath
+             , gif      :: Bool
              } deriving (Show, Generic)
 
 
@@ -75,10 +85,12 @@ centerCrop (h, w) src = crop (i, j) (h, w) src
         j = (n - w) `div` 2
 
 
-go :: Options -> IO ()
-go opts = do
-    image <- readImageRGB RPU (inImage opts)
-    
+zoomImage :: Array arr cs e
+          -- The IO is for randomness at the moment.
+          => Options
+          -> Image arr cs e
+          -> IO (Image arr cs e)
+zoomImage opts image = do
     let (y, x) = dims image
         s      = size opts
         segs a = a `div` s
@@ -88,10 +100,38 @@ go opts = do
                            z <- randomRIO (1.0, 2.0)
                            return (Zoom z, r))
     actionsRegions <- mapM addZoom regions
-     
-    let final   = applyActionsOnRegions actionsRegions image
+    --
+    return $ applyActionsOnRegions actionsRegions image
 
+
+writeGif :: Array arr RGB Double
+         => Options
+         -> Image arr RGB Double
+         -> IO ()
+writeGif opts image = do
+    imgs <- replicateM 50 (zoomImage opts image)
+    let delays = repeat 20 :: [GifDelay]
+    writeImageExact [GIF]
+                    [GIFsLooping LoopingForever]
+                    (outImage opts)
+                    (zip delays (map (exchange VS) imgs))
+
+
+writeNormal :: Array arr RGB Double
+            => Options
+            -> Image arr RGB Double
+            -> IO ()
+writeNormal opts image = do
+    final <- zoomImage opts image
     writeImage (outImage opts) final
+
+
+go :: Options -> IO ()
+go opts = do
+    image <- readImageRGB RPU (inImage opts)
+    case (gif opts) of
+         True  -> writeGif opts image
+         False -> writeNormal opts image
 
 
 main :: IO ()
