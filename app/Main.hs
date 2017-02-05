@@ -17,17 +17,14 @@ import           Graphics.Image  ( scale
                                  , topToBottom
                                  , RPU (..)
                                  , RGB (..)
-                                 , Word8 (..)
                                  , VS (..)
                                  , Border (..)
                                  , Bilinear (..)
-                                 , ImageFormat(..)
-                                 )
-import Graphics.Image.IO.Formats ( GifLooping (..)
-                                 , GIF (..) 
+                                 -- , ImageFormat (..)
+                                 -- , SaveOption (..)
                                  , GifDelay
-                                 , SaveOption(..)
                                  )
+import Graphics.Image.IO.Formats
 import           System.Random   (randomRIO)
 import           Control.Monad   (replicateM)
 import           Options.Generic ( getRecord
@@ -111,8 +108,8 @@ writeGif :: Array arr RGB Double
 writeGif opts image = do
     imgs <- replicateM 50 (zoomImage opts image)
     let delays = repeat 20 :: [GifDelay]
-    writeImageExact [GIF]
-                    [GIFsLooping LoopingForever]
+    writeImageExact GIFA
+                    [GIFALooping LoopingForever]
                     (outImage opts)
                     (zip delays (map (exchange VS) imgs))
 
