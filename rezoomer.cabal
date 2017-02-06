@@ -26,7 +26,7 @@ executable rezoomer
   ghc-options: -Wall
   build-depends:
       base >= 4.7 && < 5
-    , hip
+    , hip >= 1.5.2.0
     , random
     , optparse-generic
   default-language: Haskell2010

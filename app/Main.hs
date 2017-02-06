@@ -20,11 +20,8 @@ import           Graphics.Image  ( scale
                                  , VS (..)
                                  , Border (..)
                                  , Bilinear (..)
-                                 -- , ImageFormat (..)
-                                 -- , SaveOption (..)
-                                 , GifDelay
                                  )
-import Graphics.Image.IO.Formats 
+import           Graphics.Image.IO.Formats
 import           System.Random   (randomRIO)
 import           Control.Monad   (replicateM)
 import           Options.Generic ( getRecord
@@ -101,17 +98,16 @@ zoomImage opts image = do
     return $ applyActionsOnRegions actionsRegions image
 
 
-writeGif :: Array arr RGB Double
-         => Options
-         -> Image arr RGB Double
-         -> IO ()
+writeGif :: (Array VS cs e,
+             Writable [(GifDelay, Image VS cs e)] GIFA, Array arr' cs e) =>
+            Options -> Image arr' cs e -> IO ()
 writeGif opts image = do
     imgs <- replicateM 50 (zoomImage opts image)
     let delays = repeat 20 :: [GifDelay]
     writeImageExact GIFA
                     [GIFALooping LoopingForever]
                     (outImage opts)
-                    (zip delays images)
+                    (zip delays $ map (exchange VS) imgs)
 
 
 writeNormal :: Array arr RGB Double
