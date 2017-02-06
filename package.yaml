@@ -14,7 +14,7 @@ extra-source-files:
 
 dependencies:
   - base >= 4.7 && < 5
-  - hip
+  - hip >= 1.5.2.0
   - random
   - optparse-generic
 
